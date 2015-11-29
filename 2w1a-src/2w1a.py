@@ -8,6 +8,8 @@ class Individual:
     # Constructor
     def __init__(self, iteration):
         self.name = "Undividual_" + str(iteration)
+        self.generation = 0
+        self.maxDistance = 0
 
         self.genes = []
         # For each individual, we give him 9 genes, 3 for each motor
@@ -79,21 +81,24 @@ if clientID != -1:
         #print populations
 
         for individual in populations:
-            for gene in individual.genes:
-                print "----- Simulation started -----"
-                vrep.simxStartSimulation(clientID, opmode)
 
-                vrep.simxSetJointTargetPosition(clientID, gene.type, math.radians(gene.action), opmode)
-                vrep.simxSetJointTargetPosition(clientID, gene.type, math.radians(gene.action), opmode)
+            pret, robotPos = vrep.simxGetObjectPosition(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
+            print "2w1a position: (x = " + str(robotPos[0]) + ", y = " + str(robotPos[1]) + ")"
+
+            print "----- Simulation started -----"
+            vrep.simxStartSimulation(clientID, opmode)
+
+            for gene in individual.genes:
+
                 vrep.simxSetJointTargetPosition(clientID, gene.type, math.radians(gene.action), opmode)
 
                 # Wait in order to let the motors finish their movements
                 # Tip: there must be a more efficient way to do it...
                 time.sleep(5)
 
-                vrep.simxStopSimulation(clientID, opmode)
-                time.sleep(1)
-                print "----- Simulation ended -----"
+            vrep.simxStopSimulation(clientID, opmode)
+            time.sleep(1)
+            print "----- Simulation ended -----"
 
     # Close the connection to V-REP remote server
     # http://www.coppeliarobotics.com/helpFiles/en/remoteApiFunctionsPython.htm#simxFinish
