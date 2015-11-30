@@ -3,6 +3,15 @@ import math
 import random
 import time
 
+POPIND = 20 # Nbr d'individu par population
+BESTIND = POPIND / 4 # Nbr d'individu garde a la fin des selections
+NBGENE = 9 # Multiple de trois
+MUTATE = 50 # Chiffre compris entre 0 et 100 nombre d'individus concerne par la mutation dans une population en pourcentage
+GMUTATE = 30 # Chiffre compris entre 0 et 100 nombre de genes concerne par la mutation dans un individu en pourcentage
+MINMOTOR = 0
+MAXMOTOR = 300
+
+
 # Define Individual class
 class Individual:
     # Constructor
@@ -12,23 +21,22 @@ class Individual:
         self.maxDistance = 0
 
         self.genes = []
-        # For each individual, we give him 9 genes, 3 for each motor
-        for i in range(0, 3):
-            awrist = Gene(i, wristHandle, random.randint(0, 300))
-            self.genes.append(awrist)
-
-        for i in range(0, 3):
-            aelbow = Gene(i, elbowHandle, random.randint(0, 300))
-            self.genes.append(aelbow)
-
-        for i in range(0, 3):
-            ashoulder = Gene(i, shoulderHandle, random.randint(0, 300))
-            self.genes.append(ashoulder)
 
         random.shuffle(self.genes)
 
     def __repr__(self):
         return"Individual {name: " + self.name + ", genes: " + str(self.genes) + '}'
+
+    def setGene(self, type, gene):
+        for i in range(0, NBGENE):
+            if self.genes[i].type == type:
+                self.genes[i] = gene
+        random.shuffle(self.genes)
+
+    def beginGenesis(self, nb, type):
+        for i in range(0, nb):
+            self.genes.append(Gene(len(self.genes), type, random.randint(MINMOTOR, MAXMOTOR)))
+        random.shuffle(self.genes)
 
 
 
@@ -70,35 +78,44 @@ if clientID != -1:
     # If handlers are OK, execute three random simulations
     if ret1 == 0 and ret2 == 0 and ret3 == 0:
 
-        # Creating a population of 20 individuals
-        populations = []
+        # Creating two population of 20 individuals
+        population1 = []
+        population2 = []
 
         # Creating each individual
-        for i in range (0, 20):
+        for i in range (0, POPIND):
             individual = Individual(i)
-            populations.append(individual)
+            # For each individual, we give him 9 genes, 3 for each motor
+            individual.beginGenesis(NBGENE / 3, wristHandle)
+            individual.beginGenesis(NBGENE / 3, elbowHandle)
+            individual.beginGenesis(NBGENE / 3, shoulderHandle)
+            population1.append(individual)
 
         #print populations
+        populations = population1 + population2
 
         for individual in populations:
 
-            pret, robotPos = vrep.simxGetObjectPosition(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
-            print "2w1a position: (x = " + str(robotPos[0]) + ", y = " + str(robotPos[1]) + ")"
-
             print "----- Simulation started -----"
             vrep.simxStartSimulation(clientID, opmode)
+            pret, robotPos = vrep.simxGetObjectPosition(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
+            print "2w1a position: (x = " + str(robotPos[0]) + ", y = " + str(robotPos[1]) + ")"
 
             for gene in individual.genes:
 
                 vrep.simxSetJointTargetPosition(clientID, gene.type, math.radians(gene.action), opmode)
-
+                pgene = vrep.simxGetJointPosition(clientID, gene.type, opmode)
+                print "Motor " + str(gene.type) + " reached position: " + str(gene.action) + " degree"
                 # Wait in order to let the motors finish their movements
                 # Tip: there must be a more efficient way to do it...
-                time.sleep(5)
+                time.sleep(3)
 
+            pret, robotPosEnd = vrep.simxGetObjectPosition(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
+            print "2w1a position: (x = " + str(robotPosEnd[0]) + ", y = " + str(robotPosEnd[1]) + ")"
+            print "Distance parcourue: " + str(math.sqrt(math.pow(robotPosEnd[0] - robotPos[0],2) + math.pow(robotPosEnd[1] - robotPos[1],2)))
             vrep.simxStopSimulation(clientID, opmode)
-            time.sleep(1)
             print "----- Simulation ended -----"
+            time.sleep(2)
 
     # Close the connection to V-REP remote server
     # http://www.coppeliarobotics.com/helpFiles/en/remoteApiFunctionsPython.htm#simxFinish
