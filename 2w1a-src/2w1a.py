@@ -150,6 +150,7 @@ if clientID != -1:
                     scoreTotal = scoreTotal - individu.getScore()
                     populations.remove(individu)
                     break
+        print "Resultat selection: " + selection
         print "----- Fin de la selection -----"
     # Close the connection to V-REP remote server
     # http://www.coppeliarobotics.com/helpFiles/en/remoteApiFunctionsPython.htm#simxFinish
