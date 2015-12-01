@@ -124,7 +124,7 @@ if clientID != -1:
 
                     # Wait in order to let the motors finish their movements
 
-                    timer = 0.0
+                    timer = time.time()
                     while True:
                         pgene = vrep.simxGetJointPosition(clientID, gene.type, opmode)
 
@@ -134,9 +134,12 @@ if clientID != -1:
                             time.sleep(0.01)
                         timer += 0.01
 
-                        if timer >= 3.0:
+                        if time.time() >= timer + 3:
                             theTime = 0
                             break
+
+                    if theTime == 0:
+                        break
 
                 pret, robotPosEnd = vrep.simxGetObjectPosition(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
                 print "2w1a position: (x = " + str(robotPosEnd[0]) + ", y = " + str(robotPosEnd[1]) + ")"
