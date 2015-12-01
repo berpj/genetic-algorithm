@@ -107,7 +107,7 @@ if clientID != -1:
         
         # New generation
         for gen in range(0, GENMAX):
-
+            print "Generation " + str(gen)
             for individual in population1:
 
                 print "----- Evaluation started -----"
@@ -194,7 +194,7 @@ if clientID != -1:
             for i in range (0, (POPIND * MUTATE) / 100):
                 individual = population1[i]
                 for i2 in range (0, (NBGENE * GMUTATE) / 100):
-                    individual.genes[random.randint(0, POPIND)].action = random.randint(MINMOTOR, MAXMOTOR)
+                    individual.genes[random.randint(0, NBGENE)].action = random.randint(MINMOTOR, MAXMOTOR)
 
             print "----- End of mutation -----"
     # Close the connection to V-REP remote server
