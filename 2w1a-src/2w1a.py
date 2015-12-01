@@ -10,6 +10,7 @@ MUTATE = 50 # Chiffre compris entre 0 et 100 nombre d'individus concerne par la 
 GMUTATE = 30 # Chiffre compris entre 0 et 100 nombre de genes concerne par la mutation dans un individu en pourcentage
 MINMOTOR = 0
 MAXMOTOR = 300
+GENMAX = 20 # Nombre de generation maximum
 
 
 # Define Individual class
@@ -103,95 +104,96 @@ if clientID != -1:
                 individual.addGene(elbowHandle)
                 individual.addGene(shoulderHandle)
             population1.append(individual)
+        
+        # New generation
+        for gen in range(0, GENMAX):
 
-        #print populations
+            for individual in population1:
 
-        for individual in population1:
+                print "----- Evaluation started -----"
+                vrep.simxStartSimulation(clientID, opmode)
+                theTime = time.time()
+                pret, robotPos = vrep.simxGetObjectPosition(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
+                print "2w1a position: (x = " + str(robotPos[0]) + ", y = " + str(robotPos[1]) + ")"
 
-            print "----- Evaluation started -----"
-            vrep.simxStartSimulation(clientID, opmode)
-            theTime = time.time()
-            pret, robotPos = vrep.simxGetObjectPosition(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
-            print "2w1a position: (x = " + str(robotPos[0]) + ", y = " + str(robotPos[1]) + ")"
+                for gene in individual.genes:
 
-            for gene in individual.genes:
-
-                vrep.simxSetJointTargetPosition(clientID, gene.type, math.radians(gene.action), opmode)
-                pgene = vrep.simxGetJointPosition(clientID, gene.type, opmode)
-                print "Motor " + str(gene.type) + " reached position: " + str(gene.action) + " degree"
-
-                # Wait in order to let the motors finish their movements
-
-                timer = 0.0
-                while True:
+                    vrep.simxSetJointTargetPosition(clientID, gene.type, math.radians(gene.action), opmode)
                     pgene = vrep.simxGetJointPosition(clientID, gene.type, opmode)
+                    print "Motor " + str(gene.type) + " reached position: " + str(gene.action) + " degree"
 
-                    if round(math.degrees(pgene[1]), 0) == round(gene.action, 0):
+                    # Wait in order to let the motors finish their movements
+
+                    timer = 0.0
+                    while True:
+                        pgene = vrep.simxGetJointPosition(clientID, gene.type, opmode)
+
+                        if round(math.degrees(pgene[1]), 0) == round(gene.action, 0):
+                            break
+                        else:
+                            time.sleep(0.01)
+                        timer += 0.01
+
+                        if timer >= 3.0:
+                            theTime = 0
+                            break
+
+                pret, robotPosEnd = vrep.simxGetObjectPosition(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
+                print "2w1a position: (x = " + str(robotPosEnd[0]) + ", y = " + str(robotPosEnd[1]) + ")"
+                individual.setDistance(math.sqrt(math.pow(robotPosEnd[0] - robotPos[0],2) + math.pow(robotPosEnd[1] - robotPos[1],2)))
+                theTime = time.time() - theTime
+                individual.setScore(individual.getDistance() / theTime)
+                print "Distance parcourue: " + str(individual.getDistance())
+                print "Score obtenu: " + str(individual.getScore())
+                scoreTotal = scoreTotal + individual.getScore()
+                vrep.simxStopSimulation(clientID, opmode)
+                print "----- Evaluation ended -----"
+            populations = population1 + population2
+            print "----- Selection par roulette -----"
+            selection = []
+            for i in range(0, BESTIND):
+                random.shuffle(populations)
+                scoreToReach = random.randint(0, int(scoreTotal))
+                tmpScore = 0
+                for individu in populations:
+                    tmpScore = tmpScore + int(individu.getScore())
+                    if (tmpScore >= scoreToReach):
+                        selection.append(individu)
+                        scoreTotal = scoreTotal - individu.getScore()
+                        populations.remove(individu)
                         break
-                    else:
-                        time.sleep(0.01)
-                    timer += 0.01
+            print "Resultat selection: " + str(selection)
+            print "----- Fin de la selection -----"
+            print "----- Supression des individus faibles -----"
+            sorted(populations, key=lambda individu: individu.score)
+            if (len(populations) > POPIND):
+                lenOfPop = int(len(populations)/2)
+                for i in range(0, lenOfPop):
+                    scoreTotal = scoreTotal - populations[-1].getScore()
+                    populations.pop()
+            population2 = populations
+            print "Old generation: " + str(population2)
+            print "----- Debut du croisement -----"
+            population1 = []
+            for i in range(0, POPIND):
+                individual = Individual(i)
+                for g in range(0, NBGENE/3):
+                    selLen = len(selection)
+                    breed = selection[random.randint(0,selLen-1)]
+                    individual.setGene(Gene(g*3, wristHandle, breed.getGene((g*(NBGENE/3)))))
+                    individual.setGene(Gene(g*3+1, elbowHandle, breed.getGene((g*(NBGENE/3))+1)))
+                    individual.setGene(Gene(g*3+2, shoulderHandle, breed.getGene((g*(NBGENE/3))+2)))
+                population1.append(individual)
+            print "Resultat du croisement: " + str(population1)
+            print "----- Fin du croisement -----"
+            print "----- Mutation started -----"
 
-                    if timer >= 3.0:
-                        theTime = 0
-                        break
+            for i in range (0, (POPIND * MUTATE) / 100):
+                individual = population1[i]
+                for i2 in range (0, (NBGENE * GMUTATE) / 100):
+                    individual.genes[i].action = random.randint(MINMOTOR, MAXMOTOR)
 
-            pret, robotPosEnd = vrep.simxGetObjectPosition(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
-            print "2w1a position: (x = " + str(robotPosEnd[0]) + ", y = " + str(robotPosEnd[1]) + ")"
-            individual.setDistance(math.sqrt(math.pow(robotPosEnd[0] - robotPos[0],2) + math.pow(robotPosEnd[1] - robotPos[1],2)))
-            theTime = time.time() - theTime
-            individual.setScore(individual.getDistance() / theTime)
-            print "Distance parcourue: " + str(individual.getDistance())
-            print "Score obtenu: " + str(individual.getScore())
-            scoreTotal = scoreTotal + individual.getScore()
-            vrep.simxStopSimulation(clientID, opmode)
-            print "----- Evaluation ended -----"
-            time.sleep(2)
-        populations = population1 + population2
-        print "----- Selection par roulette -----"
-        selection = []
-        for i in range(0, BESTIND):
-            random.shuffle(populations)
-            scoreToReach = random.randint(0, int(scoreTotal))
-            tmpScore = 0
-            for individu in populations:
-                tmpScore = tmpScore + int(individu.getScore())
-                if (tmpScore >= scoreToReach):
-                    selection.append(individu)
-                    scoreTotal = scoreTotal - individu.getScore()
-                    populations.remove(individu)
-                    break
-        print "Resultat selection: " + str(selection)
-        print "----- Fin de la selection -----"
-        print "----- Supression des individus faibles -----"
-        sorted(populations, key=lambda individu: individu.score)
-        lenOfPop = int(len(populations)/2)
-        for i in range(0, lenOfPop):
-            scoreTotal = scoreTotal - populations[-1].getScore()
-            populations.pop()
-        population2 = populations
-        print "Old generation: " + str(population2)
-        print "----- Debut du croisement -----"
-        population1 = []
-        for i in range(0, POPIND):
-            individual = Individual(i)
-            for g in range(0, NBGENE/3):
-                selLen = len(selection)
-                breed = selection[random.randint(0,selLen-1)]
-                individual.setGene(Gene(g*3, wristHandle, breed.getGene((g*(NBGENE/3)))))
-                individual.setGene(Gene(g*3+1, elbowHandle, breed.getGene((g*(NBGENE/3))+1)))
-                individual.setGene(Gene(g*3+2, shoulderHandle, breed.getGene((g*(NBGENE/3))+2)))
-            population1.append(individual)
-        print "Resultat du croisement: " + str(population1)
-        print "----- Fin du croisement -----"
-        print "----- Mutation started -----"
-
-        for i in range (0, (POPIND * MUTATE) / 100):
-            individual = population1[i]
-            for i2 in range (0, (NBGENE * GMUTATE) / 100):
-                individual.genes[i].action = random.randint(MINMOTOR, MAXMOTOR)
-
-        print "----- End of mutation -----"
+            print "----- End of mutation -----"
     # Close the connection to V-REP remote server
     # http://www.coppeliarobotics.com/helpFiles/en/remoteApiFunctionsPython.htm#simxFinish
     vrep.simxFinish(clientID)
