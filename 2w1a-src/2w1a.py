@@ -138,11 +138,7 @@ if clientID != -1:
             vrep.simxStopSimulation(clientID, opmode)
             print "----- Evaluation ended -----"
             time.sleep(2)
-<<<<<<< HEAD
         populations = population1 + population2
-=======
-
->>>>>>> origin/master
         print "----- Selection par roulette -----"
         selection = []
         for i in range(0, BESTIND):
@@ -158,7 +154,6 @@ if clientID != -1:
                     break
         print "Resultat selection: " + str(selection)
         print "----- Fin de la selection -----"
-<<<<<<< HEAD
         print "----- Supression des individus faibles -----"
         sorted(populations, key=lambda individu: individu.score)
         lenOfPop = int(len(populations)/2)
@@ -180,8 +175,6 @@ if clientID != -1:
             population1.append(individual)
         print "Resultat du croisement: " + str(population1)
         print "----- Fin du croisement -----"
-=======
-
         print "----- Mutation started -----"
 
         # for i in range (0, (POPIND * MUTATE) / 100):
@@ -190,8 +183,6 @@ if clientID != -1:
         #        individual.genes[i].type = random.randint(MINMOTOR, MAXMOTOR)
 
         print "----- End of mutation -----"
-
->>>>>>> origin/master
     # Close the connection to V-REP remote server
     # http://www.coppeliarobotics.com/helpFiles/en/remoteApiFunctionsPython.htm#simxFinish
     vrep.simxFinish(clientID)
