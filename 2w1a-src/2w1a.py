@@ -75,6 +75,9 @@ if clientID != -1:
     # http://www.coppeliarobotics.com/helpFiles/en/remoteApiConstants.htm
     opmode = vrep.simx_opmode_oneshot_wait
 
+    vrep.simxStartSimulation(clientID, opmode)
+    vrep.simxStopSimulation(clientID, opmode)
+
     # Try to retrieve motors and robot handlers
     # http://www.coppeliarobotics.com/helpFiles/en/remoteApiFunctionsPython.htm#simxGetObjectHandle
     ret1, wristHandle = vrep.simxGetObjectHandle(clientID, "WristMotor", opmode)
@@ -116,16 +119,23 @@ if clientID != -1:
                 vrep.simxSetJointTargetPosition(clientID, gene.type, math.radians(gene.action), opmode)
                 pgene = vrep.simxGetJointPosition(clientID, gene.type, opmode)
                 print "Motor " + str(gene.type) + " reached position: " + str(gene.action) + " degree"
+
                 # Wait in order to let the motors finish their movements
-                # Tip: there must be a more efficient way to do it...
-                # See simxGetPingTime maybe ?
-                # or simxGetLastCmdTime
-                
-                # or:
-                # while currentPosition != finalPosition:
-                    # time.sleep(0.1)
-                
-                time.sleep(3)
+
+                timer = 0.0
+                while True:
+                    pgene = vrep.simxGetJointPosition(clientID, gene.type, opmode)
+
+                    if round(math.degrees(pgene[1]), 0) == round(gene.action, 0):
+                        break
+                    else:
+                        time.sleep(0.01)
+                    timer += 0.01
+
+                    print timer
+                    if timer >= 3.0:
+                        theTime = 0
+                        break
 
             pret, robotPosEnd = vrep.simxGetObjectPosition(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
             print "2w1a position: (x = " + str(robotPosEnd[0]) + ", y = " + str(robotPosEnd[1]) + ")"
