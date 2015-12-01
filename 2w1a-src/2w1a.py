@@ -132,7 +132,6 @@ if clientID != -1:
                         time.sleep(0.01)
                     timer += 0.01
 
-                    print timer
                     if timer >= 3.0:
                         theTime = 0
                         break
