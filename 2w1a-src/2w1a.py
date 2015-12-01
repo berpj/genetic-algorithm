@@ -142,6 +142,7 @@ if clientID != -1:
             vrep.simxStopSimulation(clientID, opmode)
             print "----- Evaluation ended -----"
             time.sleep(2)
+
         print "----- Selection par roulette -----"
         selection = []
         for i in range(0, BESTIND):
