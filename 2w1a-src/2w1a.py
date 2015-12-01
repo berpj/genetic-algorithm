@@ -23,21 +23,17 @@ class Individual:
 
         self.genes = []
 
-        random.shuffle(self.genes)
-
     def __repr__(self):
         return"Individual {name: " + self.name + ", score: " + str(self.score) + '}'
 
-    def setGene(self, type, gene):
-        for i in range(0, NBGENE):
-            if self.genes[i].type == type:
-                self.genes[i] = gene
-        random.shuffle(self.genes)
+    def setGene(self, gene):
+        self.genes.append(gene)
 
-    def beginGenesis(self, nb, type):
-        for i in range(0, nb):
-            self.genes.append(Gene(len(self.genes), type, random.randint(MINMOTOR, MAXMOTOR)))
-        random.shuffle(self.genes)
+    def addGene(self, type):
+        self.genes.append(Gene(len(self.genes), type, random.randint(MINMOTOR, MAXMOTOR)))
+
+    def getGene(self, nbr):
+        return self.genes[nbr]
 
     def setDistance(self, distance):
         self.maxDistance = distance
@@ -86,6 +82,7 @@ if clientID != -1:
     ret3, shoulderHandle = vrep.simxGetObjectHandle(clientID, "ShoulderMotor", opmode)
 
     ret4, robotHandle = vrep.simxGetObjectHandle(clientID, "2W1A", opmode)
+    scoreTotal = 0
 
     # If handlers are OK, execute three random simulations
     if ret1 == 0 and ret2 == 0 and ret3 == 0:
@@ -98,16 +95,15 @@ if clientID != -1:
         for i in range (0, POPIND):
             individual = Individual(i)
             # For each individual, we give him 9 genes, 3 for each motor
-            individual.beginGenesis(NBGENE / 3, wristHandle)
-            individual.beginGenesis(NBGENE / 3, elbowHandle)
-            individual.beginGenesis(NBGENE / 3, shoulderHandle)
+            for y in range (0, NBGENE / 3):
+                individual.addGene(wristHandle)
+                individual.addGene(elbowHandle)
+                individual.addGene(shoulderHandle)
             population1.append(individual)
 
         #print populations
-        populations = population1 + population2
-        scoreTotal = 0
 
-        for individual in populations:
+        for individual in population1:
 
             print "----- Evaluation started -----"
             vrep.simxStartSimulation(clientID, opmode)
@@ -137,6 +133,7 @@ if clientID != -1:
             vrep.simxStopSimulation(clientID, opmode)
             print "----- Evaluation ended -----"
             time.sleep(2)
+        populations = population1 + population2
         print "----- Selection par roulette -----"
         selection = []
         for i in range(0, BESTIND):
@@ -144,14 +141,35 @@ if clientID != -1:
             scoreToReach = random.randint(0, int(scoreTotal))
             tmpScore = 0
             for individu in populations:
-                tmpScore = tmpScore + individu.getScore()
+                tmpScore = tmpScore + int(individu.getScore())
                 if (tmpScore >= scoreToReach):
                     selection.append(individu)
                     scoreTotal = scoreTotal - individu.getScore()
                     populations.remove(individu)
                     break
-        print "Resultat selection: " + selection
+        print "Resultat selection: " + str(selection)
         print "----- Fin de la selection -----"
+        print "----- Supression des individus faibles -----"
+        sorted(populations, key=lambda individu: individu.score)
+        lenOfPop = int(len(populations)/2)
+        for i in range(0, lenOfPop):
+            scoreTotal = scoreTotal - populations[-1].getScore()
+            populations.pop()
+        population2 = populations
+        print "Old generation: " + str(population2)
+        print "----- Debut du croisement -----"
+        population1 = []
+        for i in range(0, POPIND):
+            individual = Individual(i)
+            for g in range(0, NBGENE/3):
+                selLen = len(selection)
+                breed = selection[random.randint(0,selLen-1)]
+                individual.setGene(Gene(g*3, wristHandle, breed.getGene((g*(NBGENE/3)))))
+                individual.setGene(Gene(g*3+1, elbowHandle, breed.getGene((g*(NBGENE/3))+1)))
+                individual.setGene(Gene(g*3+2, shoulderHandle, breed.getGene((g*(NBGENE/3))+2)))
+            population1.append(individual)
+        print "Resultat du croisement: " + str(population1)
+        print "----- Fin du croisement -----"
     # Close the connection to V-REP remote server
     # http://www.coppeliarobotics.com/helpFiles/en/remoteApiFunctionsPython.htm#simxFinish
     vrep.simxFinish(clientID)
