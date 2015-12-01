@@ -124,6 +124,11 @@ if clientID != -1:
                 # Tip: there must be a more efficient way to do it...
                 # See simxGetPingTime maybe ?
                 # or simxGetLastCmdTime
+                
+                # or:
+                # while currentPosition != finalPosition:
+                    # time.sleep(0.1)
+                
                 time.sleep(3)
 
             pret, robotPosEnd = vrep.simxGetObjectPosition(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
