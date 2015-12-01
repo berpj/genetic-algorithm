@@ -186,10 +186,10 @@ if clientID != -1:
         print "----- Fin du croisement -----"
         print "----- Mutation started -----"
 
-        # for i in range (0, (POPIND * MUTATE) / 100):
-        #    individual = population1[i]
-        #    for i2 in range (0, (NBGENE * GMUTATE) / 100):
-        #        individual.genes[i].type = random.randint(MINMOTOR, MAXMOTOR)
+        for i in range (0, (POPIND * MUTATE) / 100):
+            individual = population1[i]
+            for i2 in range (0, (NBGENE * GMUTATE) / 100):
+                individual.genes[i].action = random.randint(MINMOTOR, MAXMOTOR)
 
         print "----- End of mutation -----"
     # Close the connection to V-REP remote server
