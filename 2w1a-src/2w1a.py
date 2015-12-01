@@ -58,7 +58,7 @@ class Gene:
         self.action = action
 
     def __repr__(self):
-        return "Gene {name: " + self.name + ', type: ' + str(self.type) + '}'
+        return "Gene {name: " + self.name + ', type: ' + str(self.type) + ', degree: '+ str(self.action) + '}'
 
 
 
@@ -117,7 +117,7 @@ if clientID != -1:
                 print "2w1a position: (x = " + str(robotPos[0]) + ", y = " + str(robotPos[1]) + ")"
 
                 for gene in individual.genes:
-
+                    print "gene place, type: " + str(gene.type) + ", degree: " + str(gene.action) + ", opmode:" + str(opmode)
                     vrep.simxSetJointTargetPosition(clientID, gene.type, math.radians(gene.action), opmode)
                     pgene = vrep.simxGetJointPosition(clientID, gene.type, opmode)
                     print "Motor " + str(gene.type) + " reached position: " + str(gene.action) + " degree"
@@ -183,18 +183,19 @@ if clientID != -1:
                 for g in range(0, NBGENE/3):
                     selLen = len(selection)
                     breed = selection[random.randint(0,selLen-1)]
-                    individual.setGene(Gene(g*3, wristHandle, breed.getGene((g*(NBGENE/3)))))
-                    individual.setGene(Gene(g*3+1, elbowHandle, breed.getGene((g*(NBGENE/3))+1)))
-                    individual.setGene(Gene(g*3+2, shoulderHandle, breed.getGene((g*(NBGENE/3))+2)))
+                    individual.setGene(Gene(g*3, wristHandle, breed.getGene(g*(NBGENE/3)).action))
+                    individual.setGene(Gene(g*3+1, elbowHandle, breed.getGene((g*(NBGENE/3))+1).action))
+                    individual.setGene(Gene(g*3+2, shoulderHandle, breed.getGene((g*(NBGENE/3))+2).action))
                 population1.append(individual)
             print "Resultat du croisement: " + str(population1)
             print "----- Fin du croisement -----"
             print "----- Mutation started -----"
 
-            for i in range (0, (POPIND * MUTATE) / 100):
+            for i in range (0, int((POPIND * MUTATE) / 100)):
                 individual = population1[i]
-                for i2 in range (0, (NBGENE * GMUTATE) / 100):
-                    individual.genes[random.randint(0, NBGENE)].action = random.randint(MINMOTOR, MAXMOTOR)
+                for i2 in range (0, int((NBGENE * GMUTATE) / 100)):
+                    prevGene = random.randint(0, NBGENE-1)
+                    individual.genes[prevGene].action = random.randint(MINMOTOR, MAXMOTOR)
 
             print "----- End of mutation -----"
     # Close the connection to V-REP remote server
