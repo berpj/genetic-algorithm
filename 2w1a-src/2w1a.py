@@ -1,16 +1,18 @@
-import vrep
+﻿import vrep
 import math
+import copy
 import random
 import time
 
-POPIND = 20 # Nbr d'individu par population
+POPIND = 80 # Nbr d'individu par population
 BESTIND = int(POPIND / 4) # Nbr d'individu garde a la fin des selections
-NBGENE = 9 # Multiple de trois
-MUTATE = 50 # Chiffre compris entre 0 et 100 nombre d'individus concerne par la mutation dans une population en pourcentage
+NBGENE = 15 # Multiple de trois
+MUTATE = 5 # Chiffre compris entre 0 et 100 nombre d'individus concerne par la mutation dans une population en pourcentage
 GMUTATE = 30 # Chiffre compris entre 0 et 100 nombre de genes concerne par la mutation dans un individu en pourcentage
 MINMOTOR = 0
 MAXMOTOR = 300
-GENMAX = 20 # Nombre de generation maximum
+GENMAX = 100 # Nombre de generation maximum
+GENEPERGEN = 6 # Nombre de genes ajoutes a chaque generation (multiple de 3)
 
 
 # Define Individual class
@@ -19,7 +21,7 @@ class Individual:
     def __init__(self, iteration):
         self.name = "Individual_" + str(iteration)
         self.generation = 0
-        self.maxDistance = 0
+        self.distance = 0
         self.score = 0
 
         self.genes = []
@@ -37,13 +39,13 @@ class Individual:
         return self.genes[nbr]
 
     def setDistance(self, distance):
-        self.maxDistance = distance
+        self.distance = distance
     
     def getDistance(self):
-        return self.maxDistance
+        return self.distance
 
     def setScore(self, score):
-        self.score = score * 10000
+        self.score = score
     
     def getScore(self):
         return self.score
@@ -105,89 +107,114 @@ if clientID != -1:
                 individual.addGene(shoulderHandle)
             population1.append(individual)
         
+        maxIndScore = 0
         # New generation
         for gen in range(0, GENMAX):
-            print "Generation " + str(gen)
+            print "Génération " + str(gen)
+            print "Number of gene for this population: " + str(NBGENE)
+            popMaxScore = 0 # Score maximum par génération
             for individual in population1:
 
-                print "----- Evaluation started -----"
+                print "----- Evaluation of "+ individual.name +"started -----"
                 vrep.simxStartSimulation(clientID, opmode)
                 theTime = time.time()
+                # Start getting the robot position
                 pret, robotPos = vrep.simxGetObjectPosition(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
                 print "2w1a position: (x = " + str(robotPos[0]) + ", y = " + str(robotPos[1]) + ")"
+                # Start getting the robot orientation
+                oret, robotOrient = vrep.simxGetObjectOrientation(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
 
+                print "2w1a orientation: (x = " + str(robotOrient[0]) + \
+                      ", y = " + str(robotOrient[1]) +\
+                      ", z = " + str(robotOrient[2]) + ")"
                 for gene in individual.genes:
-                    print "gene place, type: " + str(gene.type) + ", degree: " + str(gene.action) + ", opmode:" + str(opmode)
                     vrep.simxSetJointTargetPosition(clientID, gene.type, math.radians(gene.action), opmode)
                     pgene = vrep.simxGetJointPosition(clientID, gene.type, opmode)
-                    print "Motor " + str(gene.type) + " reached position: " + str(gene.action) + " degree"
-
+                    #time.sleep(0.05)
                     # Wait in order to let the motors finish their movements
 
-                    timer = time.time()
-                    while True:
-                        pgene = vrep.simxGetJointPosition(clientID, gene.type, opmode)
+                    # timer = time.time()
+                    # while True:
+                        # pgene = vrep.simxGetJointPosition(clientID, gene.type, opmode)
 
-                        if round(math.degrees(pgene[1]), 0) == round(gene.action, 0):
-                            break
-                        else:
-                            time.sleep(0.01)
-                        timer += 0.01
+                        # if round(math.degrees(pgene[1]), 0) == round(gene.action, 0):
+                            # break
+                        # else:
+                            # time.sleep(0.01)
+                        # timer += 0.01
 
-                        if time.time() >= timer + 3:
-                            theTime = 0
-                            break
+                        # if time.time() >= timer + 3:
+                            # theTime = 0
+                            # break
 
-                    if theTime == 0:
-                        break
+                    # if theTime == 0:
+                        # break
 
+                oret, robotOrientEnd = vrep.simxGetObjectOrientation(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
                 pret, robotPosEnd = vrep.simxGetObjectPosition(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
-                print "2w1a position: (x = " + str(robotPosEnd[0]) + ", y = " + str(robotPosEnd[1]) + ")"
+
                 individual.setDistance(math.sqrt(math.pow(robotPosEnd[0] - robotPos[0],2) + math.pow(robotPosEnd[1] - robotPos[1],2)))
+                #individual.setDistance(robotPosEnd[0])
+                #if individual.distance < 0:
+                #    individual.distance = 0
                 theTime = time.time() - theTime
-                individual.setScore(individual.getDistance() / theTime)
+                # Set the score by distance between start x & y and end x & y
+                individual.setScore(int(individual.getDistance() * 10000))
+                # Set the score by the direction the robot take
+                print "Z score: " + str(int(180/math.fabs(robotOrientEnd[2]))/100)
+                individual.setScore(int(individual.getScore() * (180/math.fabs(robotOrientEnd[2])/1000)))
+                # Set the score by the stability of robot
+                print "X score: " + str(int(math.fabs(robotOrientEnd[0])+1))
+                individual.setScore(int(individual.getScore() / ((math.fabs(robotOrientEnd[0])*500)+1)))
                 print "Distance parcourue: " + str(individual.getDistance())
                 print "Score obtenu: " + str(individual.getScore())
                 scoreTotal = scoreTotal + individual.getScore()
                 vrep.simxStopSimulation(clientID, opmode)
+                time.sleep(0.2)
+                if individual.getScore() > popMaxScore :
+                    popMaxScore = individual.getScore()
+                if individual.getScore() > maxIndScore :
+                    maxIndScore = individual.getScore()
+                    print "maxIndScore => " + str(maxIndScore)
                 print "----- Evaluation ended -----"
+            if (gen > 0 and populations[0].score <= maxIndScore):
+                NBGENE = NBGENE + GENEPERGEN
             populations = population1 + population2
-            print "----- Selection par roulette -----"
+            print "----- Sélection par roulette -----"
             selection = []
+            population2 = populations
             for i in range(0, BESTIND):
-                random.shuffle(populations)
+                random.shuffle(population2)
                 scoreToReach = random.randint(0, int(scoreTotal))
                 tmpScore = 0
-                for individu in populations:
+                for individu in population2:
                     tmpScore = tmpScore + int(individu.getScore())
                     if (tmpScore >= scoreToReach):
                         selection.append(individu)
                         scoreTotal = scoreTotal - individu.getScore()
-                        populations.remove(individu)
+                        population2.remove(individu)
                         break
-            print "Resultat selection: " + str(selection)
             print "----- Fin de la selection -----"
             print "----- Supression des individus faibles -----"
-            sorted(populations, key=lambda individu: individu.score)
+            populations.sort(key=lambda individu: individu.score, reverse=True)
             if (len(populations) > POPIND):
                 lenOfPop = int(len(populations)/2)
                 for i in range(0, lenOfPop):
                     scoreTotal = scoreTotal - populations[-1].getScore()
-                    populations.pop()
             population2 = populations
-            print "Old generation: " + str(population2)
-            print "----- Debut du croisement -----"
+            print "----- Début du croisement -----"
             population1 = []
             for i in range(0, POPIND):
                 individual = Individual(i)
                 for g in range(0, NBGENE/3):
                     selLen = len(selection)
                     breed = selection[random.randint(0,selLen-1)]
-                    individual.setGene(Gene(g*3, wristHandle, breed.getGene(g*(NBGENE/3)).action))
-                    individual.setGene(Gene(g*3+1, elbowHandle, breed.getGene((g*(NBGENE/3))+1).action))
-                    individual.setGene(Gene(g*3+2, shoulderHandle, breed.getGene((g*(NBGENE/3))+2).action))
+                    breedpos = g * (len(breed.genes) / 3);
+                    individual.setGene(Gene(g*3, wristHandle, breed.getGene(breedpos%len(breed.genes)).action))
+                    individual.setGene(Gene(g*3+1, elbowHandle, breed.getGene(breedpos%len(breed.genes)+1).action))
+                    individual.setGene(Gene(g*3+2, shoulderHandle, breed.getGene(breedpos%len(breed.genes)+2).action))
                 population1.append(individual)
-            print "Resultat du croisement: " + str(population1)
+            print "Résultat du croisement: " + str(population1)
             print "----- Fin du croisement -----"
             print "----- Mutation started -----"
 
@@ -198,6 +225,8 @@ if clientID != -1:
                     individual.genes[prevGene].action = random.randint(MINMOTOR, MAXMOTOR)
 
             print "----- End of mutation -----"
+            print "Meilleur score de la génération actuelle: " + str(popMaxScore)
+    print "Le score maximal de ces génération aura été de :" + str(maxIndScore)
     # Close the connection to V-REP remote server
     # http://www.coppeliarobotics.com/helpFiles/en/remoteApiFunctionsPython.htm#simxFinish
     vrep.simxFinish(clientID)
