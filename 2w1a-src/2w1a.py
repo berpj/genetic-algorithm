@@ -161,11 +161,11 @@ if clientID != -1:
                 # Set the score by distance between start x & y and end x & y
                 individual.setScore(int(individual.getDistance() * 10000))
                 # Set the score by the direction the robot take
-                print "Z score: " + str(int(180/math.fabs(robotOrientEnd[2]))/100)
-                individual.setScore(int(individual.getScore() * (180/math.fabs(robotOrientEnd[2])/1000)))
+                print "Z score: " + str(int(180/(math.fabs(robotOrientEnd[2])+0.01))/100)
+                individual.setScore(int(individual.getScore() * (180/(math.fabs(robotOrientEnd[2])+0.01)/1000)))
                 # Set the score by the stability of robot
-                print "X score: " + str(int(math.fabs(robotOrientEnd[0])+1))
-                individual.setScore(int(individual.getScore() / ((math.fabs(robotOrientEnd[0])*500)+1)))
+                # print "X score: " + str(int(math.fabs(robotOrientEnd[0])+1))
+                #individual.setScore(int(individual.getScore() / ((math.fabs(robotOrientEnd[0])*2000)+1))) // L'axe de rotation du plan peut être x ou y, du coup, c'est pas vraiment utile, essayer de trouver quand les deux roues touchent le sol
                 print "Distance parcourue: " + str(individual.getDistance())
                 print "Score obtenu: " + str(individual.getScore())
                 scoreTotal = scoreTotal + individual.getScore()
