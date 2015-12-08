@@ -5,6 +5,7 @@
     <title>Dashboard 2w1a</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='default.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='animate.css') }}">
 
     <script type="text/javascript"
             src="https://www.google.com/jsapi?autoload={
@@ -49,18 +50,19 @@
 
             var newElement;
 
-            if ($('ul.timeline li:first')[0].className == 'timeline-inverted')
+            if ($('ul.timeline li:first')[0].className == 'timeline-inverted animated slideInRight') {
                 newElement = document.createElement('li');
-            else {
+                newElement.className = 'animated slideInLeft';
+            } else {
                 newElement = document.createElement('li');
-                newElement.className = "timeline-inverted";
+                newElement.className = "timeline-inverted animated slideInRight";
             }
 
             var tooltip = document.createElement('div');
             tooltip.className = "timeline-badge primary";
 
             var today = new Date();
-            if ($('ul.timeline li:first')[0].className == 'timeline-inverted')
+            if ($('ul.timeline li:first')[0].className == 'timeline-inverted animated slideInRight')
                 tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
             else
                 tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record invert" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
@@ -113,18 +115,19 @@
 
             var newElement;
 
-            if ($('ul.timeline li:first')[0].className == 'timeline-inverted')
+            if ($('ul.timeline li:first')[0].className == 'timeline-inverted animated slideInRight') {
                 newElement = document.createElement('li');
-            else {
+                newElement.className = 'animated slideInLeft';
+            } else {
                 newElement = document.createElement('li');
-                newElement.className = "timeline-inverted";
+                newElement.className = "timeline-inverted animated slideInRight";
             }
 
             var tooltip = document.createElement('div');
             tooltip.className = "timeline-badge primary";
 
             var today = new Date();
-            if ($('ul.timeline li:first')[0].className == 'timeline-inverted')
+            if ($('ul.timeline li:first')[0].className == 'timeline-inverted animated slideInRight')
                 tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
             else
                 tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record invert" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
@@ -182,18 +185,19 @@
 
             var newElement;
 
-            if ($('ul.timeline li:first')[0].className == 'timeline-inverted')
+            if ($('ul.timeline li:first')[0].className == 'timeline-inverted animated slideInRight') {
                 newElement = document.createElement('li');
-            else {
+                newElement.className = 'animated slideInLeft';
+            } else {
                 newElement = document.createElement('li');
-                newElement.className = "timeline-inverted";
+                newElement.className = "timeline-inverted animated slideInRight";
             }
 
             var tooltip = document.createElement('div');
             tooltip.className = "timeline-badge primary";
 
             var today = new Date();
-            if ($('ul.timeline li:first')[0].className == 'timeline-inverted')
+            if ($('ul.timeline li:first')[0].className == 'timeline-inverted animated slideInRight')
                 tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
             else
                 tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record invert" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
