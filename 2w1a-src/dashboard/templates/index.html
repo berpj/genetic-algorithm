@@ -7,14 +7,14 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='default.css') }}">
 
     <script type="text/javascript"
-          src="https://www.google.com/jsapi?autoload={
+            src="https://www.google.com/jsapi?autoload={
             'modules':[{
               'name':'visualization',
               'version':'1',
               'packages':['corechart']
             }]
           }"></script>
-        <script type="text/javascript">
+    <script type="text/javascript">
     </script>
 
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
@@ -22,7 +22,7 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 </head>
 <body>
-    <div class="container">
+<div class="container">
     <div class="page-header text-center">
         <h1 id="timeline">Dashboard 2w1a</h1>
 
@@ -238,15 +238,16 @@
             $('ul.timeline').prepend(newElement);
 
             // Find distance for this generation
-
             var distance = 0;
+            var scoreTotal = 0;
             for (i = 0; i < pdata[1].length; i++) {
                 if (distance < pdata[1][i].distance)
                     distance = pdata[1][i].distance;
+                    scoreTotal += pdata[1][i].score;
             }
 
             // Update chart
-            addRowChart(pdata[0], distance);
+            addRowChart(pdata[0], distance, scoreTotal);
 
             // Reload tooltips
             var my_posts = $("[data-toggle=tooltip]");
@@ -267,29 +268,41 @@
             clearLogs();
         });
 
+        // Stat Chart
         var options = {
           width: 1200,
           height: 300,
           vAxis: {minValue:0},
+          pointSize: 7,
+          dataOpacity: 0.3,
           animation: {
             duration: 1000,
-            easing: 'in'
+            easing: 'inAndOut'
+          },
+          series:{
+            0:{targetAxisIndex:0},
+            1:{targetAxisIndex:1},
+            2:{targetAxisIndex:1}
+          },
+          vAxes: {
+            0: {title: 'Max distance'},
+            1: {title: 'Total score'}
           }
         };
 
         var chart = new google.visualization.LineChart(document.getElementById('visualization'));
         var data = new google.visualization.DataTable();
 
-        data.addColumn('number', 'x');
-        data.addColumn('number', 'y');
-        data.addRow([0, 0]);
+        data.addColumn('number', 'gen');
+        data.addColumn('number', 'max distance');
+        data.addColumn('number', 'max score');
 
         function drawChart() {
             chart.draw(data, options);
         }
 
-        function addRowChart(gen, distance) {
-            data.addRow([gen, distance]);
+        function addRowChart(gen, distance, scoreTotal) {
+            data.addRow([gen, distance, scoreTotal]);
             drawChart()
         }
 
