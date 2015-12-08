@@ -5,31 +5,31 @@ import random
 import time
 
 ### Socket.io client ###
-from socketIO_client import SocketIO, BaseNamespace
-import jsonpickle
+# from socketIO_client import SocketIO, BaseNamespace
+# import jsonpickle
 
-class Namespace(BaseNamespace):
+# class Namespace(BaseNamespace):
 
-    def on_connect(self):
-        print('[Connected] to server socket.io')
+    # def on_connect(self):
+        # print('[Connected] to server socket.io')
 
-    def on_disconnect(self):
-        print('[Disconnected] to server socket.io')
+    # def on_disconnect(self):
+        # print('[Disconnected] to server socket.io')
 
-socketIO = SocketIO('localhost', 5000, Namespace)
+# socketIO = SocketIO('localhost', 5000, Namespace)
 
-raw_input("Press Enter to continue when the client is launched...")
+# raw_input("Press Enter to continue when the client is launched...")
 
 ########################
 
-POPIND = 80 # Nbr d'individu par population
+POPIND = 10 # Nbr d'individu par population
 BESTIND = int(POPIND / 4) # Nbr d'individu garde a la fin des selections
 NBGENE = 15 # Multiple de trois
 MUTATE = 5 # Chiffre compris entre 0 et 100 nombre d'individus concerne par la mutation dans une population en pourcentage
 GMUTATE = 30 # Chiffre compris entre 0 et 100 nombre de genes concerne par la mutation dans un individu en pourcentage
 MINMOTOR = 0
 MAXMOTOR = 300
-GENMAX = 100 # Nombre de generation maximum
+GENMAX = 500 # Nombre de generation maximum
 GENEPERGEN = 6 # Nombre de genes ajoutes a chaque generation (multiple de 3)
 
 # Define Individual class
@@ -130,7 +130,7 @@ if clientID != -1:
             print "Génération " + str(gen)
 
             # Send data to dashboard
-            socketIO.emit('start_generation', gen);
+            # socketIO.emit('start_generation', gen);
 
             print "Number of gene for this population: " + str(NBGENE)
             popMaxScore = 0 # Score maximum par génération
@@ -174,25 +174,30 @@ if clientID != -1:
                 oret, robotOrientEnd = vrep.simxGetObjectOrientation(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
                 pret, robotPosEnd = vrep.simxGetObjectPosition(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
 
-                individual.setDistance(math.sqrt(math.pow(robotPosEnd[0] - robotPos[0],2) + math.pow(robotPosEnd[1] - robotPos[1],2)))
-                #individual.setDistance(robotPosEnd[0])
-                #if individual.distance < 0:
-                #    individual.distance = 0
+                individual.setDistance(math.sqrt(math.pow(math.degrees(robotPosEnd[0]) - math.degrees(robotPos[0]),2) + math.pow(math.degrees(robotPosEnd[1]) - math.degrees(robotPos[1]),2)))
                 theTime = time.time() - theTime
                 # Set the score by distance between start x & y and end x & y
                 individual.setScore(int(individual.getDistance() * 10000))
                 # Set the score by the direction the robot take
-                print "Z score: " + str(int(180/(math.fabs(robotOrientEnd[2])+0.01))/100)
-                individual.setScore(int(individual.getScore() * (180/(math.fabs(robotOrientEnd[2])+0.01)/1000)))
+                print "Z score: " + str(math.degrees(robotOrientEnd[2]))
+                individual.setScore(int(individual.getScore() * (180/(math.fabs(math.degrees(robotOrientEnd[2]))+0.01)/1000)))
                 # Set the score by the stability of robot
                 # print "X score: " + str(int(math.fabs(robotOrientEnd[0])+1))
+                deltaXY = 1;
+                if int(math.fabs(math.degrees(robotOrient[2]))) > 45 and int(math.fabs(math.degrees(robotOrient[2]))) < 135:
+                    deltaXY = int(math.fabs(math.degrees(robotOrientEnd[1])));
+                else:
+                    deltaXY = int(math.fabs(math.degrees(robotOrientEnd[0])));
+                if deltaXY == 0:
+                    deltaXY = 1
+                individual.setScore(individual.getScore() / deltaXY)
                 #individual.setScore(int(individual.getScore() / ((math.fabs(robotOrientEnd[0])*2000)+1))) // L'axe de rotation du plan peut être x ou y, du coup, c'est pas vraiment utile, essayer de trouver quand les deux roues touchent le sol
                 print "Distance parcourue: " + str(individual.getDistance())
                 print "Score obtenu: " + str(individual.getScore())
                 scoreTotal = scoreTotal + individual.getScore()
 
                 # Send data to dashboard
-                socketIO.emit('simulation_end', jsonpickle.encode([gen, scoreTotal, individual]));
+                # socketIO.emit('simulation_end', jsonpickle.encode([gen, scoreTotal, individual]));
 
                 vrep.simxStopSimulation(clientID, opmode)
                 time.sleep(0.2)
@@ -204,7 +209,7 @@ if clientID != -1:
                 print "----- Evaluation ended -----"
 
             # Send data to dashboard
-            socketIO.emit('new_generation', jsonpickle.encode([gen, population1 + population2]));
+            # socketIO.emit('new_generation', jsonpickle.encode([gen, population1 + population2]));
 
             if (gen > 0 and populations[0].score <= maxIndScore):
                 NBGENE = NBGENE + GENEPERGEN
@@ -223,6 +228,7 @@ if clientID != -1:
                         scoreTotal = scoreTotal - individu.getScore()
                         population2.remove(individu)
                         break
+            print "pop length: " + str(len(populations))
             print "----- Fin de la selection -----"
             print "----- Supression des individus faibles -----"
             populations.sort(key=lambda individu: individu.score, reverse=True)
@@ -230,6 +236,8 @@ if clientID != -1:
                 lenOfPop = int(len(populations)/2)
                 for i in range(0, lenOfPop):
                     scoreTotal = scoreTotal - populations[-1].getScore()
+                    populations.pop();
+            print "pop length after death: " + str(len(populations))
             population2 = populations
             print "----- Début du croisement -----"
             population1 = []
