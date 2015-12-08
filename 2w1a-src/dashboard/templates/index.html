@@ -49,7 +49,7 @@
 
             var newElement;
 
-            if ($('ul.timeline li').toArray().length % 2 == 1)
+            if ($('ul.timeline li:first')[0].className == 'timeline-inverted')
                 newElement = document.createElement('li');
             else {
                 newElement = document.createElement('li');
@@ -60,7 +60,7 @@
             tooltip.className = "timeline-badge primary";
 
             var today = new Date();
-            if ($('ul.timeline li').toArray().length % 2 == 1)
+            if ($('ul.timeline li:first')[0].className == 'timeline-inverted')
                 tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
             else
                 tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record invert" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
@@ -103,16 +103,17 @@
                     the_post.css("cursor","pointer");
                 }
             }
+            clearLogs();
         });
 
         // SIMULATION END
         socket.on('simulation_end', function(data) {
+
             var pdata = JSON.parse(data);
-            console.log(pdata);
 
             var newElement;
 
-            if ($('ul.timeline li').toArray().length % 2 == 1)
+            if ($('ul.timeline li:first')[0].className == 'timeline-inverted')
                 newElement = document.createElement('li');
             else {
                 newElement = document.createElement('li');
@@ -123,7 +124,7 @@
             tooltip.className = "timeline-badge primary";
 
             var today = new Date();
-            if ($('ul.timeline li').toArray().length % 2 == 1)
+            if ($('ul.timeline li:first')[0].className == 'timeline-inverted')
                 tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
             else
                 tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record invert" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
@@ -171,6 +172,7 @@
                     the_post.css("cursor","pointer");
                 }
             }
+            clearLogs();
         });
 
         // NEW GENERATION
@@ -180,7 +182,7 @@
 
             var newElement;
 
-            if ($('ul.timeline li').toArray().length % 2 == 1)
+            if ($('ul.timeline li:first')[0].className == 'timeline-inverted')
                 newElement = document.createElement('li');
             else {
                 newElement = document.createElement('li');
@@ -191,7 +193,7 @@
             tooltip.className = "timeline-badge primary";
 
             var today = new Date();
-            if ($('ul.timeline li').toArray().length % 2 == 1)
+            if ($('ul.timeline li:first')[0].className == 'timeline-inverted')
                 tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
             else
                 tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record invert" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
@@ -261,6 +263,8 @@
                     the_post.css("cursor","pointer");
                 }
             }
+
+            clearLogs();
         });
 
         var options = {
@@ -290,6 +294,11 @@
         }
 
         drawChart();
+
+        function clearLogs() {
+            if ($('ul.timeline li').length >= 300 + 2)
+                $($('ul.timeline').children().get($('ul.timeline').children().length - 2)).remove()
+        }
     });
 </script>
 </body>
