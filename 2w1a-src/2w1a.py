@@ -5,20 +5,20 @@ import random
 import time
 
 ### Socket.io client ###
-# from socketIO_client import SocketIO, BaseNamespace
-# import jsonpickle
+from socketIO_client import SocketIO, BaseNamespace
+import jsonpickle
 
-# class Namespace(BaseNamespace):
+class Namespace(BaseNamespace):
 
-    # def on_connect(self):
-        # print('[Connected] to server socket.io')
+    def on_connect(self):
+        print('[Connected] to server socket.io')
 
-    # def on_disconnect(self):
-        # print('[Disconnected] to server socket.io')
+    def on_disconnect(self):
+        print('[Disconnected] to server socket.io')
 
-# socketIO = SocketIO('localhost', 5000, Namespace)
+socketIO = SocketIO('localhost', 5000, Namespace)
 
-# raw_input("Press Enter to continue when the client is launched...")
+raw_input("Press Enter to continue when the client is launched...")
 
 ########################
 
@@ -130,7 +130,7 @@ if clientID != -1:
             print "Génération " + str(gen)
 
             # Send data to dashboard
-            # socketIO.emit('start_generation', gen);
+            socketIO.emit('start_generation', gen);
 
             print "Number of gene for this population: " + str(NBGENE)
             popMaxScore = 0 # Score maximum par génération
@@ -197,7 +197,7 @@ if clientID != -1:
                 scoreTotal = scoreTotal + individual.getScore()
 
                 # Send data to dashboard
-                # socketIO.emit('simulation_end', jsonpickle.encode([gen, scoreTotal, individual]));
+                socketIO.emit('simulation_end', jsonpickle.encode([gen, scoreTotal, individual]));
 
                 vrep.simxStopSimulation(clientID, opmode)
                 time.sleep(0.2)
@@ -209,7 +209,7 @@ if clientID != -1:
                 print "----- Evaluation ended -----"
 
             # Send data to dashboard
-            # socketIO.emit('new_generation', jsonpickle.encode([gen, population1 + population2]));
+            socketIO.emit('new_generation', jsonpickle.encode([gen, population1 + population2]));
 
             if (gen > 0 and populations[0].score <= maxIndScore):
                 NBGENE = NBGENE + GENEPERGEN
