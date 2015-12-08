@@ -4,6 +4,24 @@ import copy
 import random
 import time
 
+### Socket.io client ###
+from socketIO_client import SocketIO, BaseNamespace
+import jsonpickle
+
+class Namespace(BaseNamespace):
+
+    def on_connect(self):
+        print('[Connected] to server socket.io')
+
+    def on_disconnect(self):
+        print('[Disconnected] to server socket.io')
+
+socketIO = SocketIO('localhost', 5000, Namespace)
+
+raw_input("Press Enter to continue when the client is launched...")
+
+########################
+
 POPIND = 80 # Nbr d'individu par population
 BESTIND = int(POPIND / 4) # Nbr d'individu garde a la fin des selections
 NBGENE = 15 # Multiple de trois
@@ -13,7 +31,6 @@ MINMOTOR = 0
 MAXMOTOR = 300
 GENMAX = 100 # Nombre de generation maximum
 GENEPERGEN = 6 # Nombre de genes ajoutes a chaque generation (multiple de 3)
-
 
 # Define Individual class
 class Individual:
@@ -111,6 +128,10 @@ if clientID != -1:
         # New generation
         for gen in range(0, GENMAX):
             print "Génération " + str(gen)
+
+            # Send data to dashboard
+            socketIO.emit('start_generation', gen);
+
             print "Number of gene for this population: " + str(NBGENE)
             popMaxScore = 0 # Score maximum par génération
             for individual in population1:
@@ -169,6 +190,10 @@ if clientID != -1:
                 print "Distance parcourue: " + str(individual.getDistance())
                 print "Score obtenu: " + str(individual.getScore())
                 scoreTotal = scoreTotal + individual.getScore()
+
+                # Send data to dashboard
+                socketIO.emit('simulation_end', jsonpickle.encode([gen, scoreTotal, individual]));
+
                 vrep.simxStopSimulation(clientID, opmode)
                 time.sleep(0.2)
                 if individual.getScore() > popMaxScore :
@@ -177,6 +202,10 @@ if clientID != -1:
                     maxIndScore = individual.getScore()
                     print "maxIndScore => " + str(maxIndScore)
                 print "----- Evaluation ended -----"
+
+            # Send data to dashboard
+            socketIO.emit('new_generation', jsonpickle.encode([gen, population1 + population2]));
+
             if (gen > 0 and populations[0].score <= maxIndScore):
                 NBGENE = NBGENE + GENEPERGEN
             populations = population1 + population2

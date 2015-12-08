@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard 2w1a</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='default.css') }}">
+
+    <script type="text/javascript"
+          src="https://www.google.com/jsapi?autoload={
+            'modules':[{
+              'name':'visualization',
+              'version':'1',
+              'packages':['corechart']
+            }]
+          }"></script>
+        <script type="text/javascript">
+    </script>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+    <div class="page-header text-center">
+        <h1 id="timeline">Dashboard 2w1a</h1>
+
+        <div id="visualization"></div>
+    </div>
+    <ul class="timeline">
+        <li class="clearfix" style="float: none;"></li>
+    </ul>
+</div>
+<script>
+    $(document).ready(function() {
+
+        // Socket.io
+
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        socket.on('connect', function() {
+            console.log('Client connected');
+        });
+
+        // START GENERATION
+        socket.on('new_generation', function(data) {
+            var pdata = JSON.parse(data);
+
+            var newElement;
+
+            if ($('ul.timeline li').toArray().length % 2 == 1)
+                newElement = document.createElement('li');
+            else {
+                newElement = document.createElement('li');
+                newElement.className = "timeline-inverted";
+            }
+
+            var tooltip = document.createElement('div');
+            tooltip.className = "timeline-badge primary";
+
+            var today = new Date();
+            if ($('ul.timeline li').toArray().length % 2 == 1)
+                tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
+            else
+                tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record invert" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
+
+            newElement.appendChild(tooltip);
+
+            var panel = document.createElement('div');
+            panel.className = "timeline-panel";
+
+            var panelHeading = document.createElement('div');
+            panelHeading.className = "timeline-heading alert alert-info";
+            panel.appendChild(panelHeading);
+
+            var panelBody = document.createElement('div');
+            panelBody.className = "timeline-body";
+            panelBody.innerHTML = '<p>Generation n°<strong>' + pdata[0] + '</strong> started</p>';
+
+            panel.appendChild(panelBody);
+
+            var panelFooter = document.createElement('div');
+            panelFooter.className = "timeline-footer";
+            panel.appendChild(panelFooter);
+
+            newElement.appendChild(panel);
+
+            $('ul.timeline').prepend(newElement);
+
+            // Reload tooltips
+            var my_posts = $("[data-toggle=tooltip]");
+
+            var size = $(window).width();
+            for (i=0;i<my_posts.length;i++) {
+                the_post = $(my_posts[i]);
+
+                if (the_post.hasClass('invert') && size >=767 ) {
+                    the_post.tooltip({ placement: 'left'});
+                    the_post.css("cursor","pointer");
+                } else{
+                    the_post.tooltip({ placement: 'rigth'});
+                    the_post.css("cursor","pointer");
+                }
+            }
+        });
+
+        // SIMULATION END
+        socket.on('simulation_end', function(data) {
+            var pdata = JSON.parse(data);
+            console.log(pdata);
+
+            var newElement;
+
+            if ($('ul.timeline li').toArray().length % 2 == 1)
+                newElement = document.createElement('li');
+            else {
+                newElement = document.createElement('li');
+                newElement.className = "timeline-inverted";
+            }
+
+            var tooltip = document.createElement('div');
+            tooltip.className = "timeline-badge primary";
+
+            var today = new Date();
+            if ($('ul.timeline li').toArray().length % 2 == 1)
+                tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
+            else
+                tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record invert" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
+
+            newElement.appendChild(tooltip);
+
+            var panel = document.createElement('div');
+            panel.className = "timeline-panel";
+
+            var panelHeading = document.createElement('div');
+            panelHeading.className = "timeline-heading alert alert-success";
+            panel.appendChild(panelHeading);
+
+            var panelBody = document.createElement('div');
+            panelBody.className = "timeline-body";
+            panelBody.innerHTML = '<p>Simulation of « <strong>' + pdata[2].name + '</strong> » finish.</p><table class="table table-hover table-condensed"><thead><tr><th>Generation</th><th>Name</th><th>Max distance</th><th>Score</th><th>Gênes</th></tr></thead><tbody></tbody></table>';
+
+            var raw = document.createElement("tr");
+            raw.innerHTML = "<td>" + pdata[2].generation + "</td><td>" + pdata[2].name + "</td><td>" + pdata[2].distance + "</td><td>" + pdata[2].score + "</td><td>" + pdata[2].genes.length + "</td>";
+
+            panelBody.getElementsByTagName("tbody")[0].appendChild(raw);
+
+            panel.appendChild(panelBody);
+
+            var panelFooter = document.createElement('div');
+            panelFooter.className = "timeline-footer";
+            panel.appendChild(panelFooter);
+
+            newElement.appendChild(panel);
+
+            $('ul.timeline').prepend(newElement);
+
+            // Reload tooltips
+            var my_posts = $("[data-toggle=tooltip]");
+
+            var size = $(window).width();
+            for (i=0;i<my_posts.length;i++) {
+                the_post = $(my_posts[i]);
+
+                if (the_post.hasClass('invert') && size >=767 ) {
+                    the_post.tooltip({ placement: 'left'});
+                    the_post.css("cursor","pointer");
+                } else{
+                    the_post.tooltip({ placement: 'rigth'});
+                    the_post.css("cursor","pointer");
+                }
+            }
+        });
+
+        // NEW GENERATION
+        socket.on('new_generation', function(data) {
+
+            var pdata = JSON.parse(data);
+
+            var newElement;
+
+            if ($('ul.timeline li').toArray().length % 2 == 1)
+                newElement = document.createElement('li');
+            else {
+                newElement = document.createElement('li');
+                newElement.className = "timeline-inverted";
+            }
+
+            var tooltip = document.createElement('div');
+            tooltip.className = "timeline-badge primary";
+
+            var today = new Date();
+            if ($('ul.timeline li').toArray().length % 2 == 1)
+                tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
+            else
+                tooltip.innerHTML = '<a><i class="glyphicon glyphicon-record invert" data-toggle="tooltip" title="' + today.toDateString() + ' ' + today.toTimeString().split(' ')[0] + '" id=""></i></a>';
+
+            newElement.appendChild(tooltip);
+
+            var panel = document.createElement('div');
+            panel.className = "timeline-panel";
+
+            var panelHeading = document.createElement('div');
+            panelHeading.className = "timeline-heading";
+            panelHeading.innerHTML = '<img class="img-responsive" src="http://localhost:5000/static/black-background.gif" />';
+            panel.appendChild(panelHeading);
+
+            var panelBody = document.createElement('div');
+            panelBody.className = "timeline-body";
+            panelBody.innerHTML = '</p><table class="table table-hover table-condensed"><thead><tr><th>Generation</th><th>Name</th><th>Max distance</th><th><span class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span> Score</th><th>Gênes</th></tr></thead><tbody></tbody></table>';
+
+            resultsSorted = pdata[1].sort(function (a, b) {
+                if (a.score < b.score)
+                  return 1;
+                if (a.score > b.score)
+                  return -1;
+                return 0;
+            });
+
+            resultsSorted.forEach(function(item) {
+                    var raw = document.createElement("tr");
+                    raw.innerHTML = "<td>" + item.generation + "</td><td>" + item.name + "</td><td>" + item.distance + "</td><td>" + item.score + "</td><td>" + item.genes.length + "</td>";
+
+                    panelBody.getElementsByTagName("tbody")[0].appendChild(raw);
+            });
+
+            panel.appendChild(panelBody);
+
+            var panelFooter = document.createElement('div');
+            panelFooter.className = "timeline-footer";
+            panel.appendChild(panelFooter);
+
+            newElement.appendChild(panel);
+
+            $('ul.timeline').prepend(newElement);
+
+            // Find distance for this generation
+
+            var distance = 0;
+            for (i = 0; i < pdata[1].length; i++) {
+                if (distance < pdata[1][i].distance)
+                    distance = pdata[1][i].distance;
+            }
+
+            // Update chart
+            addRowChart(pdata[0], distance);
+
+            // Reload tooltips
+            var my_posts = $("[data-toggle=tooltip]");
+
+            var size = $(window).width();
+            for (i=0;i<my_posts.length;i++) {
+                the_post = $(my_posts[i]);
+
+                if (the_post.hasClass('invert') && size >=767 ) {
+                    the_post.tooltip({ placement: 'left'});
+                    the_post.css("cursor","pointer");
+                } else{
+                    the_post.tooltip({ placement: 'rigth'});
+                    the_post.css("cursor","pointer");
+                }
+            }
+        });
+
+        var options = {
+          width: 1200,
+          height: 300,
+          vAxis: {minValue:0},
+          animation: {
+            duration: 1000,
+            easing: 'in'
+          }
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('visualization'));
+        var data = new google.visualization.DataTable();
+
+        data.addColumn('number', 'x');
+        data.addColumn('number', 'y');
+        data.addRow([0, 0]);
+
+        function drawChart() {
+            chart.draw(data, options);
+        }
+
+        function addRowChart(gen, distance) {
+            data.addRow([gen, distance]);
+            drawChart()
+        }
+
+        drawChart();
+    });
+</script>
+</body>
+</html>
