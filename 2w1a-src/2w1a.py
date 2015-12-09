@@ -191,7 +191,7 @@ if clientID != -1:
                 else:
                     # Set the score by the direction the robot take
                     print "Z score: " + str(math.degrees(robotOrientEnd[2]))
-                    individual.setScore(int(individual.getScore() / (180*(math.fabs(robotOrientEnd[2])+0.01)/100)))
+                    individual.setScore(int(individual.getScore() * (180*(math.fabs(math.degrees(robotOrientEnd[2]))+0.01)/100)))
                 print "Distance parcourue: " + str(individual.getDistance())
                 print "Score obtenu: " + str(individual.getScore())
                 scoreTotal = scoreTotal + individual.getScore()
@@ -251,7 +251,6 @@ if clientID != -1:
                     individual.setGene(Gene(g*3+1, elbowHandle, breed.getGene(breedpos%len(breed.genes)+1).action))
                     individual.setGene(Gene(g*3+2, shoulderHandle, breed.getGene(breedpos%len(breed.genes)+2).action))
                 population1.append(individual)
-            print "Résultat du croisement: " + str(population1)
             print "----- Fin du croisement -----"
             print "----- Mutation started -----"
 
