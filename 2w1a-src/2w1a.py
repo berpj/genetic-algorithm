@@ -22,7 +22,7 @@ raw_input("Press Enter to continue when the client is launched...")
 
 ########################
 
-POPIND = 10 # Nbr d'individu par population
+POPIND = 80 # Nbr d'individu par population
 BESTIND = int(POPIND / 4) # Nbr d'individu garde a la fin des selections
 NBGENE = 15 # Multiple de trois
 MUTATE = 5 # Chiffre compris entre 0 et 100 nombre d'individus concerne par la mutation dans une population en pourcentage
@@ -103,6 +103,8 @@ if clientID != -1:
     ret1, wristHandle = vrep.simxGetObjectHandle(clientID, "WristMotor", opmode)
     ret2, elbowHandle = vrep.simxGetObjectHandle(clientID, "ElbowMotor", opmode)
     ret3, shoulderHandle = vrep.simxGetObjectHandle(clientID, "ShoulderMotor", opmode)
+    ret4, leftWheelHandle = vrep.simxGetObjectHandle(clientID, "LeftWheelJoint", opmode)
+    ret5, rightWheelHandle = vrep.simxGetObjectHandle(clientID, "RightWheelJoint", opmode)
 
     ret4, robotHandle = vrep.simxGetObjectHandle(clientID, "2W1A", opmode)
     scoreTotal = 0
@@ -141,6 +143,8 @@ if clientID != -1:
                 theTime = time.time()
                 # Start getting the robot position
                 pret, robotPos = vrep.simxGetObjectPosition(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
+                pret4, leftWheelPos = vrep.simxGetObjectPosition(clientID, leftWheelHandle, -1, vrep.simx_opmode_streaming)
+                pret5, rightWheelPos = vrep.simxGetObjectPosition(clientID, rightWheelHandle, -1, vrep.simx_opmode_streaming)
                 print "2w1a position: (x = " + str(robotPos[0]) + ", y = " + str(robotPos[1]) + ")"
                 # Start getting the robot orientation
                 oret, robotOrient = vrep.simxGetObjectOrientation(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
@@ -174,30 +178,26 @@ if clientID != -1:
                 oret, robotOrientEnd = vrep.simxGetObjectOrientation(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
                 pret, robotPosEnd = vrep.simxGetObjectPosition(clientID, robotHandle, -1, vrep.simx_opmode_streaming)
 
+                pret4, leftWheelPosEnd = vrep.simxGetObjectPosition(clientID, leftWheelHandle, -1, vrep.simx_opmode_streaming)
+                pret5, rightWheelPosEnd = vrep.simxGetObjectPosition(clientID, rightWheelHandle, -1, vrep.simx_opmode_streaming)
+                
                 individual.setDistance(math.sqrt(math.pow(math.degrees(robotPosEnd[0]) - math.degrees(robotPos[0]),2) + math.pow(math.degrees(robotPosEnd[1]) - math.degrees(robotPos[1]),2)))
                 theTime = time.time() - theTime
                 # Set the score by distance between start x & y and end x & y
-                individual.setScore(int(individual.getDistance() * 10000))
-                # Set the score by the direction the robot take
-                print "Z score: " + str(math.degrees(robotOrientEnd[2]))
-                individual.setScore(int(individual.getScore() * (180/(math.fabs(math.degrees(robotOrientEnd[2]))+0.01)/1000)))
+                individual.setScore(int(individual.getDistance()))
                 # Set the score by the stability of robot
-                # print "X score: " + str(int(math.fabs(robotOrientEnd[0])+1))
-                deltaXY = 1;
-                if int(math.fabs(math.degrees(robotOrient[2]))) > 45 and int(math.fabs(math.degrees(robotOrient[2]))) < 135:
-                    deltaXY = int(math.fabs(math.degrees(robotOrientEnd[1])));
+                if leftWheelPosEnd[2] > rightWheelPosEnd[2] + 0.02 or leftWheelPosEnd[2] > leftWheelPos[2] + 0.02 or rightWheelPosEnd[2] > rightWheelPos[2] + 0.02:
+                    individual.setScore(int(individual.score / 100))
                 else:
-                    deltaXY = int(math.fabs(math.degrees(robotOrientEnd[0])));
-                if deltaXY == 0:
-                    deltaXY = 1
-                individual.setScore(individual.getScore() / deltaXY)
-                #individual.setScore(int(individual.getScore() / ((math.fabs(robotOrientEnd[0])*2000)+1))) // L'axe de rotation du plan peut être x ou y, du coup, c'est pas vraiment utile, essayer de trouver quand les deux roues touchent le sol
+                    # Set the score by the direction the robot take
+                    print "Z score: " + str(math.degrees(robotOrientEnd[2]))
+                    individual.setScore(int(individual.getScore() / (180*(math.fabs(robotOrientEnd[2])+0.01)/100)))
                 print "Distance parcourue: " + str(individual.getDistance())
                 print "Score obtenu: " + str(individual.getScore())
                 scoreTotal = scoreTotal + individual.getScore()
 
                 # Send data to dashboard
-                socketIO.emit('simulation_end', jsonpickle.encode([gen, scoreTotal, individual]));
+                socketIO.emit('simulation_end', jsonpickle.encode([gen, individual.getScore(), individual]));
 
                 vrep.simxStopSimulation(clientID, opmode)
                 time.sleep(0.2)
@@ -211,7 +211,7 @@ if clientID != -1:
             # Send data to dashboard
             socketIO.emit('new_generation', jsonpickle.encode([gen, population1 + population2]));
 
-            if (gen > 0 and populations[0].score <= maxIndScore):
+            if (gen > 0 and populations[0].score <= maxIndScore and gen % 6 == 1):
                 NBGENE = NBGENE + GENEPERGEN
             populations = population1 + population2
             print "----- Sélection par roulette -----"

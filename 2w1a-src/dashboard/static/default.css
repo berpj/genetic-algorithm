@@ -219,4 +219,6 @@
 .timeline > li.timeline-inverted > .timeline-badge{
   left: -12px;
 }
-
+body {
+  overflow-x: hidden;
+}

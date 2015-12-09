@@ -247,7 +247,7 @@
             for (i = 0; i < pdata[1].length; i++) {
                 if (distance < pdata[1][i].distance)
                     distance = pdata[1][i].distance;
-                    scoreTotal += pdata[1][i].score;
+                    scoreTotal = pdata[1][i].score;
             }
 
             // Update chart
@@ -289,17 +289,17 @@
             2:{targetAxisIndex:1}
           },
           vAxes: {
-            0: {title: 'Max distance'},
-            1: {title: 'Total score'}
+            0: {title: 'Distance'},
+            1: {title: 'Score'}
           }
         };
 
         var chart = new google.visualization.LineChart(document.getElementById('visualization'));
         var data = new google.visualization.DataTable();
 
-        data.addColumn('number', 'gen');
-        data.addColumn('number', 'max distance');
-        data.addColumn('number', 'max score');
+        data.addColumn('number', 'génération');
+        data.addColumn('number', 'Distance');
+        data.addColumn('number', 'Score');
 
         function drawChart() {
             chart.draw(data, options);
